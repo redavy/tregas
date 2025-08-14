@@ -1,19 +1,18 @@
-const { Telegraf } = require('telegraf');
+import { Telegraf } from 'telegraf';
 
-const bot = new Telegraf(process.env.BOT_TOKEN);
+const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
 
-bot.start((ctx) => ctx.reply('Привет! Я работаю на Vercel! 🎢'));
+bot.command('start', (ctx) => ctx.reply('Бот работает на Vercel!'));
 
-// Важно: экспортируем как Vercel Serverless Function
-module.exports = async (req, res) => {
-  try {
-    if (req.method === 'POST') {
+export default async (req, res) => {
+  if (req.method === 'POST') {
+    try {
       await bot.handleUpdate(req.body, res);
-    } else {
-      res.status(200).send('Use POST for Telegram Bot API');
+    } catch (e) {
+      console.error('Error handling update:', e);
+      res.status(500).json({ error: e.message });
     }
-  } catch (error) {
-    console.error('Error:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+  } else {
+    res.status(200).send('Use POST');
   }
 };
