@@ -1,19 +1,16 @@
 {
-  "name": "tregas-bot",
-  "version": "1.0.0",
-  "scripts": {
-    "start": "node api/webhook.js"
-  },
-  "dependencies": {
-    "telegraf": "^4.12.2",
-    "node-fetch": "^3.3.2"
-  },
-  {
-  "type": "module",
-  	"dependencies": {
-  	   	"node-fetch": "^3.3.2"
-  	}
-  }
-  }
-  }
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/bot.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "api/bot.js",
+      "methods": ["GET", "POST"]
+    }
+  ]
 }
