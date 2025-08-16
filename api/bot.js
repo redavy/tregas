@@ -2,7 +2,8 @@ import { Telegraf } from 'telegraf';
 
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
 
-bot.command('start', (ctx) => ctx.reply('Бот работает на Vercel!'));
+bot.command('start', (ctx) => ctx.reply('Скоро.'));
+bot.command('support', (ctx) => ctx.reply('Служба поддержки работает в канале @TregasSupport.'));
 
 export default async (req, res) => {
   if (req.method === 'POST') {
