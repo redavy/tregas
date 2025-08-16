@@ -4,6 +4,8 @@ const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
 
 bot.command('start', (ctx) => ctx.reply('Скоро.'));
 bot.command('support', (ctx) => ctx.reply('Служба поддержки работает в канале @TregasSupport.'));
+bot.command('club', (ctx) => ctx.reply('Скоро.'));
+bot.command('commands', (ctx) => ctx.reply('Скоро.'));
 
 export default async (req, res) => {
   if (req.method === 'POST') {
