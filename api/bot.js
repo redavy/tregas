@@ -4,8 +4,19 @@ const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
 
 bot.command('start', (ctx) => ctx.reply('Скоро.'));
 bot.command('support', (ctx) => ctx.reply('Служба поддержки работает в канале @TregasSupport.'));
-bot.command('club', (ctx) => ctx.reply('Скоро.'));
 bot.command('commands', (ctx) => ctx.reply('Скоро.'));
+
+bot.command('club' (ctx) => {
+	if (ctx.chat.type === 'private') {
+		return ctx.reply(
+			'Ты думаешь, клубные правила существуют? Это иллюзия. Только в стае можно увидеть настоящую силу. Вернись в группу, если хочешь увидеть правду.'
+		);
+	} else {
+		return ctx.reply(
+			'Скоро.'
+		);
+	}
+});
 
 export default async (req, res) => {
   if (req.method === 'POST') {
