@@ -2,7 +2,13 @@ import { Telegraf } from 'telegraf';
 
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
 
-bot.command('start', (ctx) => ctx.reply('Скоро.'));
+// Easter Egg
+bot.command('start', (ctx) => {
+	return ctx.reply(
+		"Правило первое: ты не говоришь о боте. Правило второе: ТЫ НЕ ГОВОРИШЬ О БОТЕ. Ладно, шучу. Это просто бот для статистики. Но ты же знаешь, что все не так просто, да?\nСкоро."
+	);
+});
+
 bot.command('support', (ctx) => ctx.reply('Служба поддержки работает в канале @TregasSupport.'));
 bot.command('commands', (ctx) => ctx.reply('Скоро.'));
 
