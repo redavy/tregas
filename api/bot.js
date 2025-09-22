@@ -18,7 +18,7 @@ bot.start(async (ctx) => {
         userTimers.delete(userId);
     }
     
-    await ctx.reply('Добро пожаловать в сервис «Помощь с домашкой»! Для начала работы необходимо подтвердить, что вы не робот.');
+    await ctx.reply('Добро пожаловать в сервис «HW As»! Для начала работы необходимо подтвердить, что вы не робот.');
     
     const { Markup } = await import('telegraf');
     
