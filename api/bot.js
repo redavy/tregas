@@ -1,6 +1,6 @@
 import { Telegraf } from 'telegraf';
 
-const BOT_TOKEN = process.env.BOT_TOKEN || 'YOUR_BOT_TOKEN';
+const BOT_TOKEN = process.env.BOT_TOKEN || '8338569920:AAEQ8B29xE5vXAvqUYjIH7SLYxXAkovDPUU';
 const bot = new Telegraf(BOT_TOKEN);
 
 // Обработчик команды /start
@@ -55,9 +55,3 @@ export default async (req, res) => {
     }
 };
 
-// Локальный запуск (для разработки)
-if (process.env.NODE_ENV !== 'production') {
-    bot.launch().then(() => {
-        console.log('Бот запущен в режиме polling');
-    });
-}
