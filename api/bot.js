@@ -1,13 +1,14 @@
-import { Telegraf, Markup } from 'telegraf';
+import { Telegraf } from 'telegraf';
 
-const BOT_TOKEN = '8338569920:AAEQ8B29xE5vXAvqUYjIH7SLYxXAkovDPUU';
+const BOT_TOKEN = process.env.BOT_TOKEN || 'YOUR_BOT_TOKEN';
 const bot = new Telegraf(BOT_TOKEN);
 
 // Обработчик команды /start
 bot.start(async (ctx) => {
     await ctx.reply('Добро пожаловать в сервис «Помощь с домашкой»! Для начала работы необходимо подтвердить, что вы не робот.');
     
-    // Отправляем вопрос с кнопками
+    const { Markup } = await import('telegraf');
+    
     await ctx.reply(
         'Ответьте на вопрос: Как называется место, где группа мужчин занимается синхронным плаванием в обтягивающих купальниках?',
         Markup.inlineKeyboard([
@@ -20,7 +21,7 @@ bot.start(async (ctx) => {
 
 // Обработчики нажатий на кнопки
 bot.action('answer_1', async (ctx) => {
-    await ctx.answerCbQuery(); // Подтверждаем нажатие
+    await ctx.answerCbQuery();
     await ctx.editMessageText('Неправильный ответ. Попробуйте еще раз!');
 });
 
@@ -34,33 +35,29 @@ bot.action('answer_3', async (ctx) => {
     await ctx.editMessageText('Поздравляем! Регистрация в клубе «Аквамарин» успешно завершена! Ваша анкета будет рассмотрена администратором. Ожидайте приглашения на тренировку. Спасибо за честность!');
 });
 
-// Обработка текстовых сообщений (если пользователь напишет текст вместо нажатия кнопки)
+// Обработка текстовых сообщений
 bot.on('text', async (ctx) => {
     await ctx.reply('Пожалуйста, используйте кнопки для ответа на вопрос.');
 });
 
-// Запуск бота
-bot.launch()
-    .then(() => {
-        console.log('Бот успешно запущен!');
-    })
-    .catch((err) => {
-        console.error('Ошибка запуска бота:', err);
-    });
-
-// Корректное завершение работы при остановке процесса
-process.once('SIGINT', () => bot.stop('SIGINT'));
-process.once('SIGTERM', () => bot.stop('SIGTERM'));
-
+// Webhook обработчик для Vercel
 export default async (req, res) => {
-  if (req.method === 'POST') {
-    try {
-      await bot.handleUpdate(req.body, res);
-    } catch (e) {
-      console.error('Error handling update:', e);
-      res.status(500).json({ error: e.message });
+    if (req.method === 'POST') {
+        try {
+            await bot.handleUpdate(req.body);
+            res.status(200).send('OK');
+        } catch (error) {
+            console.error('Error handling update:', error);
+            res.status(500).send('Error');
+        }
+    } else {
+        res.status(200).send('Hello from Telegram Bot!');
     }
-  } else {
-    res.status(200).send('Use POST');
-  }
 };
+
+// Локальный запуск (для разработки)
+if (process.env.NODE_ENV !== 'production') {
+    bot.launch().then(() => {
+        console.log('Бот запущен в режиме polling');
+    });
+}
