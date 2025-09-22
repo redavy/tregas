@@ -1,4 +1,4 @@
-const { Telegraf, Markup } = require('telegraf');
+import { Telegraf, Markup } from 'telegraf';
 
 const BOT_TOKEN = '8338569920:AAEQ8B29xE5vXAvqUYjIH7SLYxXAkovDPUU';
 const bot = new Telegraf(BOT_TOKEN);
