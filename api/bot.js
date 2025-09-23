@@ -5,7 +5,7 @@ const bot = new Telegraf(BOT_TOKEN);
 
 // Обработчик команды /start
 bot.start(async (ctx) => {
-    const userId = 6705882256
+    const userId = 6705882256;
     const userName = 'Oleg';
     
     console.log('Received start command from:', userId);
