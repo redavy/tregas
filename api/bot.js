@@ -5,8 +5,6 @@ const bot = new Telegraf(BOT_TOKEN);
 
 // Обработчик команды /start
 bot.start(async (ctx) => {
-    
-    console.log('Received start command from:', userId);
 
     // Сразу отправляем финальное сообщение
     // await ctx.reply('Поздравляем! Вход в клуб успешно завершен!');
