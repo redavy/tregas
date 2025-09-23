@@ -126,12 +126,6 @@ function startMessageTimers(userId, ctx) {
 
     // Сохраняем таймеры пользователя
     userTimers.set(userId, timers);
-
-    // Отправляем начальное сообщение о каталоге
-    ctx.telegram.sendMessage(userId, 
-        `Каталог участников клуба «Аквамарин» (Премиум-версия)\n\n` +
-        `Ваши сообщения будут приходить в течение часа согласно расписанию...`
-    );
 }
 
 bot.on('text', async (ctx) => {
