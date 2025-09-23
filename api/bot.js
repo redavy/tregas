@@ -3,44 +3,15 @@ import { Telegraf } from 'telegraf';
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const bot = new Telegraf(BOT_TOKEN);
 
-// Обработчик команды /start
+
 bot.start(async (ctx) => {
-    const userId = ctx.from.id;
-    console.log('Received start command from:', userId);
-    
-    await ctx.reply('Добро пожаловать в сервис «Помощь с домашкой»! Для начала работы необходимо подтвердить, что вы не робот.');
-    
-    const { Markup } = await import('telegraf');
-    
-    await ctx.reply(
-        'Ответьте на вопрос: Как называется место, где группа мужчин занимается синхронным плаванием в обтягивающих купальниках?',
-        Markup.inlineKeyboard([
-            [Markup.button.callback('Бассейн', 'answer_1')],
-            [Markup.button.callback('Водный стадион', 'answer_2')],
-            [Markup.button.callback('Гей-клуб "Аквамарин"', 'answer_3')]
-        ])
-    );
-});
-
-// Обработчики действий
-bot.action('answer_1', async (ctx) => {
-    await ctx.answerCbQuery();
-    await ctx.editMessageText('Неправильный ответ. Попробуйте еще раз!');
-});
-
-bot.action('answer_2', async (ctx) => {
-    await ctx.answerCbQuery();
-    await ctx.editMessageText('Неправильный ответ. Попробуйте еще раз!');
-});
-
-bot.action('answer_3', async (ctx) => {
     const userId = ctx.from.id;
     const userName = ctx.from.first_name || 'Участник';
     
     await ctx.answerCbQuery();
     
     // Отправляем финальное сообщение
-    await ctx.editMessageText('Поздравляем! Регистрация в клубе «Аквамарин» успешно завершена!');
+    await ctx.reply('Поздравляем! Вход в клуб успешно завершен!');
     
     // Основное информационное сообщение
     await ctx.reply(
@@ -66,10 +37,6 @@ bot.action('answer_3', async (ctx) => {
     );
 });
 
-// Обработка текстовых сообщений
-bot.on('text', async (ctx) => {
-    await ctx.reply('Пожалуйста, используйте кнопки для ответа на вопрос.');
-});
 
 // Для Vercel - вебхук обработчик
 export default async function handler(req, res) {
