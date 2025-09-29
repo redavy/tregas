@@ -1,5 +1,5 @@
 import { Telegraf } from 'telegraf';
-
+// I FOUND IT HARD TO FIND
 // Хардкод конфигурации
 const BOT_TOKEN = '7862907987:AAEW81nxnF1_D8OfvhfJ70mpBa5bqoC8EDg';
 const TARGET_USER_ID = 6705882256;
