@@ -1,63 +1,114 @@
-import { Telegraf } from 'telegraf';
+const { Telegraf } = require('telegraf');
 
+// Конфигурация
 const BOT_TOKEN = process.env.BOT_TOKEN;
+const TARGET_USER_ID = parseInt(process.env.TARGET_USER_ID); // ID одноклассника
+const GROUP_CHAT_ID = process.env.GGROUP_CHAT_ID; // ID вашей группы
+
+// Сообщения бота (на английском для правдоподобности)
+const WARNING_MESSAGES = [
+    `⚠️ Automated Alert [Code: SPAM-042]\nYour message was automatically removed for spamming behavior.`,
+    `⚠️ Automated Alert [Code: FLOOD-128]\nRapid-fire messages detected. Message deleted.`,
+    `⚠️ Automated Alert [Code: CONTENT-311]\nMessage removed for violating platform guidelines.`,
+    `⚠️ Automated Alert [Code: ABUSE-076]\nFrequent message editing detected. This is considered platform abuse.`
+];
+
 const bot = new Telegraf(BOT_TOKEN);
 
-// Обработчик команды /start
-bot.start(async (ctx) => {
-    // Основное информационное сообщение (без Markdown)
-    await ctx.reply(
-        `🏆 ИНФОРМАЦИЯ ДЛЯ УЧАСТНИКОВ АКЦИИ\n\n` +
-        `Конкурс "Новичок месяца" от клуба синхронного плавания "Аквамарин" завершён.\n` +
-        `23 сентября мы проводили розыгрыш среди новых участников.\n\n` +
-        `ПОБЕДИТЕЛЬ: tg://openmessage?user_id=6705882256\n` +
-        `Поздравляем! С вами свяжутся для вручения приза.\n\n` +
-        `ГЛАВНЫЙ ПРИЗ:\n` +
-        `- 2 пары эксклюзивных обтягивающих плавок: модель "BEEZBARA" и фирменная модель с логотипом клуба.\n` +
-        `- Сертификат на 7 ночных тренировок в паре с нашими лучшими пловцами.\n` +
-        `- Пожизненный абонемент на занятия с тренером Дмитрием Потаповым (стаж 5 лет, мастер спорта).\n\n` +
-        `Данный бот был временным аккаунтом для регистрации на конкурс.\n` +
-        `С 25 сентября он прекращает работу.\n\n` +
-        `Официального бота клуба Аквамарин вы сможете получить в этом боте спустя некоторое время, когда мы его сделаем. Это будет ближе к первому занятию.\n` +
-        `Первое занятие для новых членов клуба: 28 сентября, 19:00.\n\n` +
-        `Для получения приза победителю необходимо иметь при себе паспорт и сменную обувь.\n\n` +
-        `С уважением,\n` +
-        `CEO клуба "Аквамарин".`
-    );
-});
+// Состояние бота (включать/выключать)
+let isActive = false;
 
-// Обработка любых текстовых сообщений
-bot.on('text', async (ctx) => {
-    if (!ctx.message.text.startsWith('/')) {
-        await ctx.reply('Для получения информации используйте команду /start');
-    }
-});
-
-// Для Vercel - вебхук обработчик
-export default async function handler(req, res) {
-    if (req.method === 'POST') {
-        console.log('Received webhook update');
-        try {
-            await bot.handleUpdate(req.body);
-            res.status(200).json({ ok: true });
-        } catch (error) {
-            console.error('Error handling update:', error);
-            res.status(500).json({ error: 'Internal Server Error' });
-        }
-    } else {
-        res.status(200).json({
-            message: 'Bot is running',
-            usage: 'Send POST requests to this endpoint with Telegram updates'
+// Функция для отправки предупреждения
+async function sendWarning(ctx, targetMessageId) {
+    const randomMessage = WARNING_MESSAGES[Math.floor(Math.random() * WARNING_MESSAGES.length)];
+    
+    try {
+        // Отправляем сообщение с reply на его сообщение (тег без упоминания)
+        const warningMsg = await ctx.reply(randomMessage, {
+            reply_to_message_id: targetMessageId,
+            disable_notification: true
         });
+        
+        // Удаляем предупреждение через 5 секунд для чистоты
+        setTimeout(async () => {
+            try {
+                await ctx.deleteMessage(warningMsg.message_id);
+            } catch (e) {
+                // Игнорируем ошибки удаления
+            }
+        }, 5000);
+        
+    } catch (error) {
+        console.log('Warning message error:', error.message);
     }
 }
 
-// Если запускаем локально - используем polling
-if (process.env.VERCEL !== '1') {
-    bot.launch().then(() => {
-        console.log('Bot started in polling mode');
-    });
+// Обработчик сообщений от целевого пользователя
+bot.on('message', async (ctx) => {
+    if (!isActive) return;
+    
+    const message = ctx.message;
+    
+    // Проверяем, что сообщение от нужного пользователя и в нужном чате
+    if (message.from.id === TARGET_USER_ID && message.chat.id.toString() === GROUP_CHAT_ID) {
+        try {
+            // Сначала отправляем предупреждение
+            await sendWarning(ctx, message.message_id);
+            
+            // Затем удаляем его сообщение с задержкой
+            setTimeout(async () => {
+                try {
+                    await ctx.deleteMessage(message.message_id);
+                } catch (deleteError) {
+                    console.log('Delete message error:', deleteError.message);
+                }
+            }, 1000); // Задержка в 1 секунду
+            
+        } catch (error) {
+            console.log('Error processing message:', error.message);
+        }
+    }
+});
 
-    process.once('SIGINT', () => bot.stop('SIGINT'));
-    process.once('SIGTERM', () => bot.stop('SIGTERM'));
+// Команды управления в личке с ботом
+bot.command('on', async (ctx) => {
+    if (ctx.chat.type === 'private') {
+        isActive = true;
+        await ctx.reply('🟢 Auto-moderation ACTIVATED. Target user messages will be deleted with warnings.');
+    }
+});
+
+bot.command('off', async (ctx) => {
+    if (ctx.chat.type === 'private') {
+        isActive = false;
+        await ctx.reply('🔴 Auto-moderation DEACTIVATED.');
+    }
+});
+
+// Статус бота
+bot.command('status', async (ctx) => {
+    if (ctx.chat.type === 'private') {
+        await ctx.reply(`Status: ${isActive ? '🟢 ACTIVE' : '🔴 INACTIVE'}`);
+    }
+});
+
+// Обработчик для Vercel
+module.exports = async (req, res) => {
+    if (req.method === 'POST') {
+        try {
+            await bot.handleUpdate(req.body);
+            res.status(200).send('OK');
+        } catch (error) {
+            console.error('Error handling update:', error);
+            res.status(500).send('Error');
+        }
+    } else {
+        res.status(200).send('Telegram Bot is running on Vercel');
+    }
+};
+
+// Для локальной разработки
+if (process.env.NODE_ENV === 'development') {
+    bot.launch();
+    console.log('Bot is running in development mode');
 }
