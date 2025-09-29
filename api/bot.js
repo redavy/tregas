@@ -1,4 +1,4 @@
-const { Telegraf } = require('telegraf');
+import { Telegraf } from 'telegraf';
 
 // Конфигурация
 const BOT_TOKEN = process.env.BOT_TOKEN;
