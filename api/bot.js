@@ -7,8 +7,6 @@ const GROUP_CHAT_ID = '-1002712293369';
 
 const bot = new Telegraf(BOT_TOKEN);
 let isActive = false;
-let isSpamming = false;
-let spamInterval = null;
 
 // Сообщения бота (4 варианта)
 const WARNING_MESSAGES = [
@@ -29,6 +27,9 @@ const WORDS_LIST = [
     "Анус,", "вагина,", "путана,", "педрила",
     "Шалава,", "хуило,", "мошонка,", "елда"
 ];
+
+// Храним состояние для каждого чата
+const chatStates = new Map();
 
 // Команды управления
 bot.command('on', (ctx) => {
@@ -52,51 +53,67 @@ bot.command('status', (ctx) => {
 });
 
 // Команда /help
-bot.command('help', (ctx) => {
-    if (isSpamming) return; // Уже спамит
+bot.command('help', async (ctx) => {
+    const chatId = ctx.chat.id;
     
-    isSpamming = true;
-    let wordIndex = 0;
-    
-    spamInterval = setInterval(async () => {
-        if (wordIndex >= WORDS_LIST.length) {
-            clearInterval(spamInterval);
-            isSpamming = false;
-            return;
-        }
-        
-        try {
-            await ctx.reply(WORDS_LIST[wordIndex]);
-            wordIndex++;
-        } catch (error) {
-            console.log('Error sending message:', error.message);
-            clearInterval(spamInterval);
-            isSpamming = false;
-        }
-    }, 1000); // Каждую секунду
-});
-
-// Команда остановки спама
-bot.command('stop', (ctx) => {
-    if (spamInterval) {
-        clearInterval(spamInterval);
-        isSpamming = false;
+    // Если уже идет спам в этом чате, останавливаем
+    if (chatStates.has(chatId)) {
+        chatStates.delete(chatId);
+        return;
     }
+    
+    // Начинаем новый спам
+    const state = {
+        index: 0,
+        lastSent: Date.now()
+    };
+    chatStates.set(chatId, state);
+    
+    // Отправляем первое слово
+    if (state.index < WORDS_LIST.length) {
+        await ctx.reply(WORDS_LIST[state.index]);
+        state.index++;
+        state.lastSent = Date.now();
+    }
+    
+    // Сохраняем контекст для последующих сообщений
+    state.ctx = ctx;
 });
 
-// Обработчик сообщений
+// Обработчик всех сообщений для продолжения спама
 bot.on('message', async (ctx) => {
+    const chatId = ctx.chat.id;
+    
+    // Проверяем, нужно ли продолжать спам в этом чате
+    if (chatStates.has(chatId)) {
+        const state = chatStates.get(chatId);
+        const now = Date.now();
+        
+        // Проверяем, прошла ли хотя бы 1 секунда с последнего сообщения
+        if (now - state.lastSent >= 1000 && state.index < WORDS_LIST.length) {
+            await ctx.reply(WORDS_LIST[state.index]);
+            state.index++;
+            state.lastSent = now;
+            
+            // Если слова закончились, останавливаем спам
+            if (state.index >= WORDS_LIST.length) {
+                chatStates.delete(chatId);
+            }
+        }
+    }
+    
+    // Оригинальная логика модерации
     if (!isActive) return;
 
     const message = ctx.message;
-
+    
     // Проверяем, что сообщение от нужного пользователя в нужной группе
     if (message.from.id === TARGET_USER_ID && message.chat.id.toString() === GROUP_CHAT_ID) {
         try {
             // Случайное сообщение из 4 вариантов
             const randomMessage = WARNING_MESSAGES[Math.floor(Math.random() * WARNING_MESSAGES.length)];
 
-            // Отправляем предупреждение с reply (это создаст "тег" без упоминания)
+            // Отправляем предупреждение с reply
             const warningMsg = await ctx.reply(randomMessage, {
                 reply_to_message_id: message.message_id,
                 disable_notification: true
@@ -111,7 +128,7 @@ bot.on('message', async (ctx) => {
                 }
             }, 1000);
 
-            // Удаляем предупреждение бота через 5 секунд для чистоты
+            // Удаляем предупреждение бота через 5 секунд
             setTimeout(async () => {
                 try {
                     await ctx.deleteMessage(warningMsg.message_id);
@@ -126,6 +143,14 @@ bot.on('message', async (ctx) => {
     }
 });
 
+// Команда остановки спама
+bot.command('stop', (ctx) => {
+    const chatId = ctx.chat.id;
+    if (chatStates.has(chatId)) {
+        chatStates.delete(chatId);
+    }
+});
+
 // Вебхук обработчик
 export default async (req, res) => {
     if (req.method === 'POST') {
@@ -134,7 +159,7 @@ export default async (req, res) => {
             res.status(200).send('OK');
         } catch (error) {
             console.error('Webhook error:', error.message);
-            res.status(200).send('OK'); // Всегда отвечаем 200 для Telegram
+            res.status(200).send('OK');
         }
     } else {
         res.status(200).json({
